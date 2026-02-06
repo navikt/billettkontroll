@@ -39,6 +39,7 @@ jobs:
         run: ./mvnw test -B
 
       - name: Build and push Docker image
+        if: github.ref == 'refs/heads/main'
         uses: nais/docker-build-push@87f920b0411b987d9a1fd4113aa384e1e3b54f2c
         id: docker-build-push
         with:
