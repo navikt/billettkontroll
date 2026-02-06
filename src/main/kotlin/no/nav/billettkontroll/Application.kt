@@ -3,7 +3,9 @@ package no.nav.billettkontroll
 import com.sun.net.httpserver.Filter
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import jakarta.xml.ws.Binding
 import jakarta.xml.ws.Endpoint
+import jakarta.xml.ws.soap.SOAPBinding
 import org.slf4j.LoggerFactory
 import java.net.InetSocketAddress
 
@@ -27,6 +29,11 @@ fun main() {
     val soapContext = httpServer.createContext("/services/pipEgenAnsatt")
     soapContext.filters.add(AccessLogFilter())
     val endpoint = Endpoint.create(PipEgenAnsattServiceImpl())
+    
+    // Add handler for WS-Security headers
+    val binding = endpoint.binding as SOAPBinding
+    binding.handlerChain = listOf(SecurityHeaderHandler())
+    
     endpoint.publish(soapContext)
 
     httpServer.start()
