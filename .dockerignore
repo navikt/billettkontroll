@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+.github
+
+# IDE
+.idea
+*.iml
+.vscode
+*.swp
+*.swo
+
+# Maven - exclude target except jar and lib
+target/*
+!target/*.jar
+!target/lib/
+
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+docs/
+
+# NAIS (included separately)
+#.nais/
