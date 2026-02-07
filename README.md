@@ -1,7 +1,7 @@
 # Billettkontroll
 
-Applikasjon laget for å tilby tjenesten SOAP tjensten erEgenAnsattEllerIFamilieMedEgenAnsatt til Infotrygd Facade. Denne
-tjenesten ble tidligere tilbudt av bussen.s
+Applikasjon laget for å tilby SOAP-tjenesten erEgenAnsattEllerIFamilieMedEgenAnsatt til Infotrygd Facade. Denne
+tjenesten ble tidligere tilbudt av bussen.
 
 Kotlin-applikasjon som serverer en SOAP WebService med JDK HttpServer.
 
@@ -9,6 +9,17 @@ Kotlin-applikasjon som serverer en SOAP WebService med JDK HttpServer.
 
 - **SOAP Endpoint**: `/services/pipEgenAnsatt`
 - **Health Check**: `/internal/health/liveness`
+
+## Integrasjoner
+
+Applikasjonen kaller [skjermede-personer-pip](https://github.com/navikt/skjermede-personer-pip) for å sjekke om en person er skjermet (egen ansatt).
+
+| Miljø | URL |
+|-------|-----|
+| Dev | https://skjermede-personer-pip.intern.dev.nav.no |
+| Prod | https://skjermede-personer-pip.intern.nav.no |
+
+Autentisering skjer via Azure AD Client Credentials.
 
 ## Lokal utvikling
 
@@ -53,10 +64,10 @@ Deployes automatisk via GitHub Actions ved push til `main`:
 
 ## Miljøer
 
-| Miljø | URL | Replicas |
-|-------|-----|----------|
-| Dev | https://billettkontroll.intern.dev.nav.no | 2-4 |
-| Prod | https://billettkontroll.intern.nav.no | 4-8 |
+| Miljø | URL |
+|-------|-----|
+| Dev | https://billettkontroll.intern.dev.nav.no |
+| Prod | https://billettkontroll.intern.nav.no |
 
 ## Teknologi
 
@@ -64,3 +75,5 @@ Deployes automatisk via GitHub Actions ved push til `main`:
 - JDK 25 HttpServer
 - Metro JAX-WS (SOAP)
 - Logback (logging)
+- Jackson (JSON)
+- Azure AD (autentisering)

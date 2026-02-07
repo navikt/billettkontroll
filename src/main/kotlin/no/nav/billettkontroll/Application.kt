@@ -3,7 +3,6 @@ package no.nav.billettkontroll
 import com.sun.net.httpserver.Filter
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import jakarta.xml.ws.Binding
 import jakarta.xml.ws.Endpoint
 import jakarta.xml.ws.soap.SOAPBinding
 import org.slf4j.LoggerFactory

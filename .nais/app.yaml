@@ -39,6 +39,20 @@ spec:
   ingresses:
     - https://billettkontroll.intern.dev.nav.no
 
+  azure:
+    application:
+      enabled: true
+
+  accessPolicy:
+    outbound:
+      rules:
+        - application: skjermede-personer-pip
+          namespace: nom
+
   env:
     - name: JAVA_OPTS
       value: "-XX:MaxRAMPercentage=75.0 -XX:+UseParallelGC"
+    - name: SKJERMEDE_PERSONER_URL
+      value: "https://skjermede-personer-pip.intern.dev.nav.no"
+    - name: SKJERMEDE_PERSONER_SCOPE
+      value: "api://dev-gcp.nom.skjermede-personer-pip/.default"
