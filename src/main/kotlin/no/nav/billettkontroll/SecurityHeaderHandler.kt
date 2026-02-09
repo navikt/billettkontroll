@@ -47,7 +47,19 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
             val assertion = findAssertion(securityElement)
 
             if (assertion == null) {
-                logger.info("WS-Security header present but no SAML assertion found")
+                val childElements = buildList {
+                    val children = securityElement.childNodes
+                    for (i in 0 until children.length) {
+                        val child = children.item(i)
+                        if (child is Element) {
+                            add("{${child.namespaceURI}}${child.localName}")
+                        }
+                    }
+                }
+                logger.info(
+                    "WS-Security header present but no SAML assertion found: {}",
+                    kv("security_children", childElements)
+                )
                 return
             }
 
