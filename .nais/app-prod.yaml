@@ -56,3 +56,5 @@ spec:
       value: "http://skjermede-personer-pip.nom"
     - name: SKJERMEDE_PERSONER_SCOPE
       value: "api://prod-gcp.nom.skjermede-personer-pip/.default"
+    - name: ALLOWED_USERNAMES
+      value: "srvInfotrygd-facade"

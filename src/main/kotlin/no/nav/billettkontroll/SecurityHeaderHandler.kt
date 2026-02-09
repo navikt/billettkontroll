@@ -17,7 +17,11 @@ private const val SAML1_NS = "urn:oasis:names:tc:SAML:1.0:assertion"
 private const val XMLDSIG_NS = "http://www.w3.org/2000/09/xmldsig#"
 private const val WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
 
-class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
+class SecurityHeaderHandler(
+    private val allowedUsernames: Set<String> = System.getenv("ALLOWED_USERNAMES")
+        ?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toSet()
+        ?: emptySet()
+) : SOAPHandler<SOAPMessageContext> {
 
     companion object {
         private val SECURITY_HEADER = QName(WSSE_NS, "Security")
@@ -28,7 +32,7 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
     override fun handleMessage(context: SOAPMessageContext): Boolean {
         val outbound = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
         if (!outbound) {
-            logSecurityHeader(context.message)
+            return validateSecurityHeader(context.message)
         }
         return true
     }
@@ -37,11 +41,17 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
 
     override fun close(context: MessageContext) {}
 
-    private fun logSecurityHeader(message: SOAPMessage) {
+    private fun validateSecurityHeader(message: SOAPMessage): Boolean {
         try {
-            val header = message.soapHeader ?: return
+            val header = message.soapHeader ?: run {
+                logger.warn("Request rejected: no SOAP header present")
+                return false
+            }
             val securityHeaders = header.getChildElements(SECURITY_HEADER)
-            if (!securityHeaders.hasNext()) return
+            if (!securityHeaders.hasNext()) {
+                logger.warn("Request rejected: no WS-Security header present")
+                return false
+            }
 
             val securityElement = securityHeaders.next() as Element
             val assertion = findAssertion(securityElement)
@@ -50,26 +60,27 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
                 val usernameToken = findFirst(securityElement, WSSE_NS, "UsernameToken")
                 if (usernameToken != null) {
                     val username = getElementText(usernameToken, WSSE_NS, "Username")
-                    logger.info(
-                        "WS-Security UsernameToken: {}",
-                        kv("wsse_username", username ?: "unknown")
-                    )
-                } else {
-                    val childElements = buildList {
-                        val children = securityElement.childNodes
-                        for (i in 0 until children.length) {
-                            val child = children.item(i)
-                            if (child is Element) {
-                                add("{${child.namespaceURI}}${child.localName}")
-                            }
+                    if (username != null && username in allowedUsernames) {
+                        logger.info("Request authorized: {}", kv("wsse_username", username))
+                        return true
+                    }
+                    logger.warn("Request rejected: {}", kv("wsse_username", username ?: "empty"))
+                    return false
+                }
+                val childElements = buildList {
+                    val children = securityElement.childNodes
+                    for (i in 0 until children.length) {
+                        val child = children.item(i)
+                        if (child is Element) {
+                            add("{${child.namespaceURI}}${child.localName}")
                         }
                     }
-                    logger.info(
-                        "WS-Security header present, unknown content: {}",
-                        kv("security_children", childElements)
-                    )
                 }
-                return
+                logger.warn(
+                    "Request rejected, unknown security content: {}",
+                    kv("security_children", childElements)
+                )
+                return false
             }
 
             val samlNs = assertion.namespaceURI
@@ -92,8 +103,10 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
                 kv("saml_authn_context", authnContext ?: "not set"),
                 kv("saml_signed", if (signatureAlgorithm != null) "yes ($signatureAlgorithm)" else "no")
             )
+            return true
         } catch (e: Exception) {
-            logger.warn("Error processing security header", e)
+            logger.warn("Error processing security header, rejecting request", e)
+            return false
         }
     }
 
