@@ -15,11 +15,11 @@ private val logger = LoggerFactory.getLogger(SecurityHeaderHandler::class.java)
 private const val SAML2_NS = "urn:oasis:names:tc:SAML:2.0:assertion"
 private const val SAML1_NS = "urn:oasis:names:tc:SAML:1.0:assertion"
 private const val XMLDSIG_NS = "http://www.w3.org/2000/09/xmldsig#"
+private const val WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
 
 class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
 
     companion object {
-        private val WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
         private val SECURITY_HEADER = QName(WSSE_NS, "Security")
     }
 
@@ -47,19 +47,28 @@ class SecurityHeaderHandler : SOAPHandler<SOAPMessageContext> {
             val assertion = findAssertion(securityElement)
 
             if (assertion == null) {
-                val childElements = buildList {
-                    val children = securityElement.childNodes
-                    for (i in 0 until children.length) {
-                        val child = children.item(i)
-                        if (child is Element) {
-                            add("{${child.namespaceURI}}${child.localName}")
+                val usernameToken = findFirst(securityElement, WSSE_NS, "UsernameToken")
+                if (usernameToken != null) {
+                    val username = getElementText(usernameToken, WSSE_NS, "Username")
+                    logger.info(
+                        "WS-Security UsernameToken: {}",
+                        kv("wsse_username", username ?: "unknown")
+                    )
+                } else {
+                    val childElements = buildList {
+                        val children = securityElement.childNodes
+                        for (i in 0 until children.length) {
+                            val child = children.item(i)
+                            if (child is Element) {
+                                add("{${child.namespaceURI}}${child.localName}")
+                            }
                         }
                     }
+                    logger.info(
+                        "WS-Security header present, unknown content: {}",
+                        kv("security_children", childElements)
+                    )
                 }
-                logger.info(
-                    "WS-Security header present but no SAML assertion found: {}",
-                    kv("security_children", childElements)
-                )
                 return
             }
 
