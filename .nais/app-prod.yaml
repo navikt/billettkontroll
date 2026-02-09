@@ -53,6 +53,6 @@ spec:
     - name: JAVA_OPTS
       value: "-XX:MaxRAMPercentage=75.0 -XX:+UseParallelGC"
     - name: SKJERMEDE_PERSONER_URL
-      value: "https://skjermede-personer-pip.intern.nav.no"
+      value: "http://skjermede-personer-pip.nom"
     - name: SKJERMEDE_PERSONER_SCOPE
       value: "api://prod-gcp.nom.skjermede-personer-pip/.default"
