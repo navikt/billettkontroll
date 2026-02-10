@@ -2,9 +2,9 @@ apiVersion: nais.io/v1alpha1
 kind: Application
 metadata:
   name: billettkontroll
-  namespace: pensjondeployer
+  namespace: teampensjon
   labels:
-    team: pensjondeployer
+    team: teampensjon
 spec:
   image: {{image}}
   port: 8080
