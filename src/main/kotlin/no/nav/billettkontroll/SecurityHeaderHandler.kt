@@ -1,9 +1,11 @@
 package no.nav.billettkontroll
 
+import jakarta.xml.soap.SOAPFactory
 import jakarta.xml.soap.SOAPMessage
 import jakarta.xml.ws.handler.MessageContext
 import jakarta.xml.ws.handler.soap.SOAPHandler
 import jakarta.xml.ws.handler.soap.SOAPMessageContext
+import jakarta.xml.ws.soap.SOAPFaultException
 import net.logstash.logback.argument.StructuredArguments.kv
 import org.slf4j.LoggerFactory
 import org.w3c.dom.Element
@@ -16,6 +18,7 @@ private const val SAML2_NS = "urn:oasis:names:tc:SAML:2.0:assertion"
 private const val SAML1_NS = "urn:oasis:names:tc:SAML:1.0:assertion"
 private const val XMLDSIG_NS = "http://www.w3.org/2000/09/xmldsig#"
 private const val WSSE_NS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+private const val SOAP_ENV_NS = "http://schemas.xmlsoap.org/soap/envelope/"
 
 class SecurityHeaderHandler(
     private val allowedUsernames: Set<String> = System.getenv("ALLOWED_USERNAMES")
@@ -32,7 +35,7 @@ class SecurityHeaderHandler(
     override fun handleMessage(context: SOAPMessageContext): Boolean {
         val outbound = context[MessageContext.MESSAGE_OUTBOUND_PROPERTY] as Boolean
         if (!outbound) {
-            return validateSecurityHeader(context.message)
+            validateSecurityHeader(context.message)
         }
         return true
     }
@@ -41,16 +44,18 @@ class SecurityHeaderHandler(
 
     override fun close(context: MessageContext) {}
 
-    private fun validateSecurityHeader(message: SOAPMessage): Boolean {
+    private fun validateSecurityHeader(message: SOAPMessage) {
         try {
-            val header = message.soapHeader ?: run {
+            val header = message.soapHeader
+            if (header == null) {
                 logger.warn("Request rejected: no SOAP header present")
-                return false
+                rejectWithFault("Request rejected: no SOAP header present")
             }
+
             val securityHeaders = header.getChildElements(SECURITY_HEADER)
             if (!securityHeaders.hasNext()) {
                 logger.warn("Request rejected: no WS-Security header present")
-                return false
+                rejectWithFault("Request rejected: no WS-Security header present")
             }
 
             val securityElement = securityHeaders.next() as Element
@@ -62,10 +67,10 @@ class SecurityHeaderHandler(
                     val username = getElementText(usernameToken, WSSE_NS, "Username")
                     if (username != null && username in allowedUsernames) {
                         logger.info("Request authorized: {}", kv("wsse_username", username))
-                        return true
+                        return
                     }
                     logger.warn("Request rejected: {}", kv("wsse_username", username ?: "empty"))
-                    return false
+                    rejectWithFault("Request rejected: unauthorized username")
                 }
                 val childElements = buildList {
                     val children = securityElement.childNodes
@@ -80,7 +85,7 @@ class SecurityHeaderHandler(
                     "Request rejected, unknown security content: {}",
                     kv("security_children", childElements)
                 )
-                return false
+                rejectWithFault("Request rejected: unknown security content")
             }
 
             val samlNs = assertion.namespaceURI
@@ -103,11 +108,20 @@ class SecurityHeaderHandler(
                 kv("saml_authn_context", authnContext ?: "not set"),
                 kv("saml_signed", if (signatureAlgorithm != null) "yes ($signatureAlgorithm)" else "no")
             )
-            return true
+        } catch (e: SOAPFaultException) {
+            throw e
         } catch (e: Exception) {
             logger.warn("Error processing security header, rejecting request", e)
-            return false
+            rejectWithFault("Error processing security header")
         }
+    }
+
+    private fun rejectWithFault(message: String): Nothing {
+        val fault = SOAPFactory.newInstance().createFault(
+            message,
+            QName(SOAP_ENV_NS, "Client")
+        )
+        throw SOAPFaultException(fault)
     }
 
     private fun findAssertion(securityElement: Element): Element? {
