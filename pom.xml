@@ -14,7 +14,7 @@
     <properties>
         <java.version>25</java.version>
         <kotlin.version>2.4.0</kotlin.version>
-        <cxf.version>4.2.1</cxf.version>
+        <cxf.version>4.2.2</cxf.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
