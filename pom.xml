@@ -20,7 +20,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- For overstyre versjonen som kommer med logstash-logback-encoder 9.0 -->
+            <!-- Styrer versjon på Jackson 3.x, både egen bruk og transitiv fra logstash-logback-encoder 9.0 -->
             <dependency>
                 <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
@@ -48,9 +48,8 @@
 
         <!-- JSON parsing -->
         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
+            <groupId>tools.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <version>2.22.2</version>
         </dependency>
 
         <!-- Logging -->
