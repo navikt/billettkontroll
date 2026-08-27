@@ -1,6 +1,6 @@
 package no.nav.billettkontroll
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.http.HttpClient

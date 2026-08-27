@@ -1,6 +1,6 @@
 package no.nav.billettkontroll
 
-import com.fasterxml.jackson.core.JsonParseException
+import tools.jackson.core.exc.StreamReadException
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
@@ -184,9 +184,9 @@ class AzureAdTokenClientTest {
                 )
         )
 
-        // Jackson kaster JsonParseException (en IOException, ikke RuntimeException)
-        // ved ugyldig JSON, derfor JsonParseException og ikke RuntimeException her.
-        assertThrows<JsonParseException> {
+        // Jackson 3 kaster StreamReadException (unchecked, extends JacksonException/RuntimeException)
+        // ved ugyldig JSON, derfor StreamReadException og ikke RuntimeException her.
+        assertThrows<StreamReadException> {
             tokenClient.getToken("api://test/.default")
         }
     }
