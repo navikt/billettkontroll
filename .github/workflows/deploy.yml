@@ -60,7 +60,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Deploy to dev-gcp
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6
+        uses: nais/deploy/actions/deploy@f7d413cffac4c73314c90c1abeb162b3c7b0c2c0
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/app.yaml
@@ -80,7 +80,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Deploy to prod-gcp
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6
+        uses: nais/deploy/actions/deploy@f7d413cffac4c73314c90c1abeb162b3c7b0c2c0
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/app-prod.yaml
